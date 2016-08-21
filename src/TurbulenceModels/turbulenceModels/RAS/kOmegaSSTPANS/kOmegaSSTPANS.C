@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "kOmegaSSTPANS.H"
+#include "fvOptions.H"
 #include "bound.H"
 #include "wallDist.H"
 
@@ -35,24 +36,6 @@ namespace RASModels
 {
 
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-template<class BasicTurbulenceModel>
-void kOmegaSSTPANS<BasicTurbulenceModel>::correctPANSCoeffs()
-{
-    fK_ = min
-    (
-        max
-        (
-            sqrt(betaStar_.value())*(pow(pow(cellVolume,1.0/3.0)*
-                (betaStar_.value()*omegaU_)/sqrt(kU_),2.0/3.0)),
-            loLimVec
-        ),
-        uLimVec
-    );
-
-    fOmega_ = fEpsilon_/fK_;
-
-}
 
 template<class BasicTurbulenceModel>
 tmp<volScalarField> kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS::F1
@@ -84,7 +67,8 @@ tmp<volScalarField> kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS::F1
 }
 
 template<class BasicTurbulenceModel>
-tmp<volScalarField> kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS::F2() const
+tmp<volScalarField>
+kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS::F2() const
 {
     tmp<volScalarField> arg2 = min
     (
@@ -100,7 +84,8 @@ tmp<volScalarField> kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS::F2() con
 }
 
 template<class BasicTurbulenceModel>
-tmp<volScalarField> kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS::F3() const
+tmp<volScalarField>
+kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS::F3() const
 {
     tmp<volScalarField> arg3 = min
     (
@@ -112,13 +97,14 @@ tmp<volScalarField> kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS::F3() con
 }
 
 template<class BasicTurbulenceModel>
-tmp<volScalarField> kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS::F23() const
+tmp<volScalarField>
+kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS::F23() const
 {
     tmp<volScalarField> f23(F2());
 
     if (F3_)
     {
-        f23() *= F3();
+        f23.ref() *= F3();
     }
 
     return f23;
@@ -126,10 +112,15 @@ tmp<volScalarField> kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS::F23() co
 
 
 template<class BasicTurbulenceModel>
-void kOmegaSSTPANS<BasicTurbulenceModel>::correctNut(const volScalarField& S2)
+void kOmegaSSTPANS<BasicTurbulenceModel>::correctNut
+(
+	const volScalarField& S2,
+	const volScalarField& F2
+)
 {
-    this->nut_ = a1_*kU_/max(a1_*omegaU_, b1_*F23()*sqrt(S2));
+    this->nut_ = a1_*kU_/max(a1_*omegaU_, b1_*F2*sqrt(S2));
     this->nut_.correctBoundaryConditions();
+    fv::options::New(this->mesh_).correct(this->nut_);
 
     BasicTurbulenceModel::correctNut();
 }
@@ -140,9 +131,19 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correctNut(const volScalarField& S2)
 template<class BasicTurbulenceModel>
 void kOmegaSSTPANS<BasicTurbulenceModel>::correctNut()
 {
-    correctNut(2*magSqr(symm(fvc::grad(this->U_))));
+    correctNut(2*magSqr(symm(fvc::grad(this->U_))), F23());
 }
 
+template<class BasicTurbulenceModel>
+tmp<volScalarField>
+kOmegaSSTPANS<BasicTurbulenceModel>::epsilonByk
+(
+    const volScalarField& F1,
+    const volScalarField& F2
+) const
+{
+    return betaStar_*omega_;
+}
 
 template<class BasicTurbulenceModel>
 tmp<fvScalarMatrix> kOmegaSSTPANS<BasicTurbulenceModel>::kSource() const
@@ -336,8 +337,6 @@ kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS
         )
     ),
 
-    y_(wallDist::New(this->mesh_).y()),
-
     fEpsilon_
     (
         dimensioned<scalar>::lookupOrAddToDict
@@ -365,25 +364,9 @@ kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS
             0.1
         )
     ),
-    uLimVec
-    (
-        dimensionedScalar("uLimVec", uLim_)
-    ),
-    loLimVec
-    (
-        dimensionedScalar("loLimVec", loLim_)
-    ),
-    cellVolume
-    (
-        IOobject
-        (
-            "cellVolume",
-            this->runTime_.timeName(),
-            this->mesh_
-        ),
-        this->mesh_,
-        dimensionedScalar("zero", dimVolume, 0.0)
-    ),
+
+    y_(wallDist::New(this->mesh_).y()),
+
     fK_
     (
         IOobject
@@ -459,8 +442,6 @@ kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS
         this->mesh_
     )
 {
-    //Initialize variable cellVolume
-    cellVolume.internalField() = this->mesh_.V();
 
     kU_ = k_*fK_;
     omegaU_ = omega_*fOmega_;
@@ -525,6 +506,7 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correct()
     const surfaceScalarField& alphaRhoPhi = this->alphaRhoPhi_;
     const volVectorField& U = this->U_;
     volScalarField& nut = this->nut_;
+    fv::options& fvOptions(fv::options::New(this->mesh_));
 
     eddyViscosity<RASModel<BasicTurbulenceModel> >::correct();
 
@@ -536,8 +518,8 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correct()
     volScalarField G(this->GName(), nut*GbyNu);
     tgradU.clear();
 
-    // Update omega and G at the wall
-    omegaU_.boundaryField().updateCoeffs();
+    // Update omegaU and G at the wall
+    omegaU_.boundaryFieldRef().updateCoeffs();
 
     volScalarField CDkOmega
     (
@@ -546,7 +528,8 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correct()
     );
 
     volScalarField F1(this->F1(CDkOmega));
-
+    volScalarField F23(this->F23());
+    
     {
         volScalarField gamma(this->gamma(F1));
         volScalarField beta(this->beta(F1));
@@ -567,7 +550,7 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correct()
            *min
             (
                 GbyNu,
-                (c1_/a1_)*betaStar_*omegaU_*max(a1_*omegaU_, b1_*F23()*sqrt(S2))
+                (c1_/a1_)*betaStar_*omegaU_*max(a1_*omegaU_, b1_*F23*sqrt(S2))
             )
           - fvm::SuSp((2.0/3.0)*alpha*rho*gamma*divU, omegaU_)
           - fvm::Sp(alpha*rho*betaL*omegaU_, omegaU_)
@@ -578,13 +561,14 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correct()
             )
           + Qsas(S2, gamma, beta)
           + omegaSource()
+          + fvOptions(alpha, rho, omegaU_)
         );
 
-        omegaUEqn().relax();
-
-        omegaUEqn().boundaryManipulate(omegaU_.boundaryField());
-
+        omegaUEqn.ref().relax();
+        fvOptions.constrain(omegaUEqn.ref());
+        omegaUEqn.ref().boundaryManipulate(omegaU_.boundaryFieldRef());
         solve(omegaUEqn);
+        fvOptions.correct(omegaU_);
         bound(omegaU_, min(fOmega_)*this->omegaMin_);
     }
 
@@ -597,12 +581,15 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correct()
      ==
         min(alpha*rho*G, (c1_*betaStar_)*alpha*rho*kU_*omegaU_)
       - fvm::SuSp((2.0/3.0)*alpha*rho*divU, kU_)
-      - fvm::Sp(alpha*rho*betaStar_*omegaU_, kU_)
+      - fvm::Sp(alpha*rho*epsilonByk(F1, F23), kU_)
       + kSource()
+      + fvOptions(alpha, rho, kU_)
     );
 
-    kUEqn().relax();
+    kUEqn.ref().relax();
+    fvOptions.constrain(kUEqn.ref());
     solve(kUEqn);
+    fvOptions.correct(kU_);
     bound(kU_, min(fK_)*this->kMin_);
 
     // Calculation of Turbulent kinetic energy and Frequency
@@ -612,12 +599,30 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correct()
     bound(k_, this->kMin_);
     bound(omega_, this->omegaMin_);
 
-    correctNut(S2);
+    correctNut(S2, F23);
     
-    //Info << "Recalculating fK with new kU and omegaU" << endl;
-
     // Recalculate fK with new kU and epsilonU
-    correctPANSCoeffs();
+    
+    // Geometric parameter
+    volScalarField::Internal delta
+    (
+        pow(this->mesh_.V(),1.0/3.0)
+    );
+    
+    // Calculate the Taylor microscale
+    volScalarField::Internal Lambda
+    (
+        pow(k_,1.5)/(betaStar_*k_*omega_)
+    );
+
+    Info<<"delta[10]: "<<fK_[10]<<endl;
+
+    fK_.primitiveFieldRef() = min(max(
+        sqrt(betaStar_.value())*pow(delta/Lambda,2.0/3.0), loLim_), uLim_);
+
+    Info<<"fK_[10]: "<<fK_[10]<<endl;
+
+    fOmega_ = fEpsilon_/fK_;
 
 }
 

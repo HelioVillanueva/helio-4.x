@@ -170,9 +170,6 @@ protected:
             dimensionedScalar fEpsilon_;
             dimensionedScalar uLim_;
             dimensionedScalar loLim_;
-            dimensionedScalar uLimVec;
-            dimensionedScalar loLimVec;
-
 
         // Fields
 
@@ -181,12 +178,11 @@ protected:
             //  which is for near-wall cells only
             const volScalarField& y_;
 
-            volScalarField cellVolume;
             volScalarField fK_;
             volScalarField fOmega_;
             volScalarField k_;
-            volScalarField kU_;
             volScalarField omega_;
+            volScalarField kU_;
             volScalarField omegaU_;
 
 
@@ -228,13 +224,18 @@ protected:
             return blend(F1, gamma1_, gamma2_);
         }
 
-        void correctNut(const volScalarField& S2);
+        void correctNut(const volScalarField& S2, const volScalarField& F2);
 
 
     // Protected Member Functions
 
         virtual void correctNut();
-        virtual void correctPANSCoeffs();
+        //- Return epsilon/k which for standard RAS is betaStar*omega
+        virtual tmp<volScalarField> epsilonByk
+        (
+            const volScalarField& F1,
+            const volScalarField& F2
+        ) const;
         virtual tmp<fvScalarMatrix> kSource() const;
         virtual tmp<fvScalarMatrix> omegaSource() const;
         virtual tmp<fvScalarMatrix> Qsas
