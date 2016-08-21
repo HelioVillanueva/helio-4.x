@@ -141,12 +141,11 @@ protected:
             dimensionedScalar fEpsilon_;
             dimensionedScalar uLim_;
             dimensionedScalar loLim_;
-            dimensionedScalar uLimVec;
-            dimensionedScalar loLimVec;
 
         // Fields
 
-            volScalarField cellVolume;
+            /*volScalarField uLimVec;
+            volScalarField loLimVec;*/
             volScalarField fK_;
             volScalarField C2U;
             volScalarField k_;
@@ -158,7 +157,6 @@ protected:
     // Protected Member Functions
 
         virtual void correctNut();
-        virtual void correctPANSCoeffs();
         virtual tmp<fvScalarMatrix> kSource() const;
         virtual tmp<fvScalarMatrix> epsilonSource() const;
 
@@ -253,7 +251,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#   include "kEpsilonPANS.C"
+    #include "kEpsilonPANS.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
