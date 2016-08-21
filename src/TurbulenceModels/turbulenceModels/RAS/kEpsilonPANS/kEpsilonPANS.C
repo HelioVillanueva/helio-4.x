@@ -356,7 +356,6 @@ void kEpsilonPANS<BasicTurbulenceModel>::correct()
     bound(epsilonU_, fEpsilon_*this->epsilonMin_);
 
 
-
     // Unresolved Turbulent kinetic energy equation
     tmp<fvScalarMatrix> kUEqn
     (

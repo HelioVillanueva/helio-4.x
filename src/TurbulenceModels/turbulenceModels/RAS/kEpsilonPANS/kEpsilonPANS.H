@@ -240,7 +240,6 @@ public:
         virtual void correct();
 };
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace RASModels
