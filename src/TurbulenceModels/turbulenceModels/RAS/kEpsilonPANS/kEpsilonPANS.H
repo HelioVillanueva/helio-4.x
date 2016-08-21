@@ -144,8 +144,6 @@ protected:
 
         // Fields
 
-            /*volScalarField uLimVec;
-            volScalarField loLimVec;*/
             volScalarField fK_;
             volScalarField C2U;
             volScalarField k_;

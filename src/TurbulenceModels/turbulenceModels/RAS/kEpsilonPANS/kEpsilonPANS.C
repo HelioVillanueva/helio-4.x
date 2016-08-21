@@ -388,16 +388,16 @@ void kEpsilonPANS<BasicTurbulenceModel>::correct()
 
     // Recalculate fK and C2U with new kU and epsilonU
 
-    // Calculate the Taylor microscale
-    volScalarField::Internal Lambda
-    (
-    	pow(k_,1.5)/epsilon_
-    );
-
     // Geometric parameter
     volScalarField::Internal delta
     (
     	pow(this->mesh_.V(),1.0/3.0)
+    );
+
+    // Calculate the Taylor microscale
+    volScalarField::Internal Lambda
+    (
+    	pow(k_,1.5)/epsilon_
     );
     
     // update fK
