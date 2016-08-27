@@ -146,6 +146,7 @@ protected:
 
             volScalarField fK_;
             volScalarField C2U;
+
             volScalarField k_;
             volScalarField kU_;
             volScalarField epsilon_;
@@ -234,6 +235,18 @@ public:
         virtual tmp<volScalarField> epsilon() const
         {
             return epsilon_;
+        }
+
+        //- Return the unresolved turbulence kinetic energy
+        virtual tmp<volScalarField> kU() const
+        {
+            return kU_;
+        }
+
+        //- Return the unresolved turbulence kinetic energy dissipation rate
+        virtual tmp<volScalarField> epsilonU() const
+        {
+            return epsilonU_;
         }
 
         //- Solve the turbulence equations and correct the turbulence viscosity

@@ -226,10 +226,11 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
             IOobject::groupName("kU", U.group()),
             this->runTime_.timeName(),
             this->mesh_,
-            IOobject::MUST_READ,
+            IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        this->mesh_
+        k_*fK_,
+        k_.boundaryField().types()
     ),
     epsilon_
     (
@@ -250,20 +251,18 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
             IOobject::groupName("epsilonU", U.group()),
             this->runTime_.timeName(),
             this->mesh_,
-            IOobject::MUST_READ,
+            IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        this->mesh_
+        epsilon_*fEpsilon_,
+        epsilon_.boundaryField().types()
     )
 {
-
-    kU_ = k_*fK_;
-    epsilonU_ = epsilon_*fEpsilon_;
-
     bound(k_, this->kMin_);
-    bound(kU_, this->kMin_);
     bound(epsilon_, this->epsilonMin_);
-    bound(epsilonU_, this->epsilonMin_);
+    bound(kU_, min(fK_)*this->kMin_);
+    bound(epsilonU_, fEpsilon_*this->epsilonMin_);
+
 
     if (type == typeName)
     {
@@ -378,7 +377,10 @@ void kEpsilonPANS<BasicTurbulenceModel>::correct()
 
     // Calculation of Turbulent kinetic energy and Dissipation rate
     k_ = kU_/fK_;
+    k_.correctBoundaryConditions();
+    
     epsilon_ = epsilonU_/fEpsilon_;
+    epsilon_.correctBoundaryConditions();
 
     bound(k_, this->kMin_);
     bound(epsilon_, this->epsilonMin_);
