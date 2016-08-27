@@ -392,24 +392,11 @@ kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS
         ),
         fEpsilon_/fK_
     ),
-
     k_
     (
         IOobject
         (
             IOobject::groupName("k", U.group()),
-            this->runTime_.timeName(),
-            this->mesh_,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        this->mesh_
-    ),
-    omega_
-    (
-        IOobject
-        (
-            IOobject::groupName("omega", U.group()),
             this->runTime_.timeName(),
             this->mesh_,
             IOobject::MUST_READ,
@@ -424,6 +411,19 @@ kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS
             IOobject::groupName("kU", U.group()),
             this->runTime_.timeName(),
             this->mesh_,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        k_*fK_,
+        k_.boundaryField().types()
+    ),
+    omega_
+    (
+        IOobject
+        (
+            IOobject::groupName("omega", U.group()),
+            this->runTime_.timeName(),
+            this->mesh_,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -436,16 +436,13 @@ kOmegaSSTPANS<BasicTurbulenceModel>::kOmegaSSTPANS
             IOobject::groupName("omegaU", U.group()),
             this->runTime_.timeName(),
             this->mesh_,
-            IOobject::MUST_READ,
+            IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        this->mesh_
+        omega_*fOmega_,
+        omega_.boundaryField().types()
     )
 {
-
-    kU_ = k_*fK_;
-    omegaU_ = omega_*fOmega_;
-
     bound(k_, this->kMin_);
     bound(omega_, this->omegaMin_);
     bound(kU_, this->kMin_);
@@ -589,7 +586,7 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correct()
     kUEqn.ref().relax();
     fvOptions.constrain(kUEqn.ref());
     solve(kUEqn);
-    fvOptions.correct(kU_);
+    //fvOptions.correct(kU_);
     bound(kU_, min(fK_)*this->kMin_);
 
     // Calculation of Turbulent kinetic energy and Frequency
@@ -612,18 +609,15 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correct()
     // Calculate the Taylor microscale
     volScalarField::Internal Lambda
     (
-        pow(k_,1.5)/(betaStar_*k_*omega_)
+        sqrt(k_)/(betaStar_*omega_)
     );
 
-    Info<<"delta[10]: "<<fK_[10]<<endl;
-
+    // update fK
     fK_.primitiveFieldRef() = min(max(
-        sqrt(betaStar_.value())*pow(delta/Lambda,2.0/3.0), loLim_), uLim_);
+        sqrt(1.0/betaStar_.value())*pow(delta/Lambda,2.0/3.0), loLim_), uLim_);
 
-    Info<<"fK_[10]: "<<fK_[10]<<endl;
-
+    // update fOmega
     fOmega_ = fEpsilon_/fK_;
-
 }
 
 

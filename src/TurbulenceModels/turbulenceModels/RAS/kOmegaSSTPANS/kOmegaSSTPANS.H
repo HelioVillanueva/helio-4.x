@@ -180,9 +180,10 @@ protected:
 
             volScalarField fK_;
             volScalarField fOmega_;
+
             volScalarField k_;
-            volScalarField omega_;
             volScalarField kU_;
+            volScalarField omega_;
             volScalarField omegaU_;
 
 
@@ -338,6 +339,18 @@ public:
         virtual tmp<volScalarField> omega() const
         {
             return omega_;
+        }
+
+        //- Return the unresolved turbulence kinetic energy
+        virtual tmp<volScalarField> kU() const
+        {
+            return kU_;
+        }
+
+        //- Return the turbulence kinetic energy dissipation rate
+        virtual tmp<volScalarField> omegaU() const
+        {
+            return omegaU_;
         }
 
         //- Solve the turbulence equations and correct the turbulence viscosity
