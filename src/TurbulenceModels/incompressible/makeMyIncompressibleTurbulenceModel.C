@@ -65,9 +65,6 @@ namespace Foam
 #include "kEpsilonPANS.H"
 makeRASModel(kEpsilonPANS);
 
-#include "kOmegaSSTPANS.H"
-makeRASModel(kOmegaSSTPANS);
-
 // -------------------------------------------------------------------------- //
 // LES models
 // -------------------------------------------------------------------------- //

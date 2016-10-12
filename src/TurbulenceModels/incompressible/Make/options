@@ -1,6 +1,5 @@
 EXE_INC = \
 	-I../turbulenceModels/RAS/kEpsilonPANS \
-	-I../turbulenceModels/RAS/kOmegaSSTPANS \
     -I$(LIB_SRC)/transportModels \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
