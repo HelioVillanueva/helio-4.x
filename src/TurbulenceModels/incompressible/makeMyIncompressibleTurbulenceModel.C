@@ -28,9 +28,9 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "makeTurbulenceModel.H"
 
-//#include "laminar.H"
+#include "laminar.H"
 #include "RASModel.H"
-//#include "LESModel.H"
+#include "LESModel.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -64,6 +64,9 @@ namespace Foam
 
 #include "kEpsilonPANS.H"
 makeRASModel(kEpsilonPANS);
+
+#include "kOmegaSSTPANS.H"
+makeRASModel(kOmegaSSTPANS);
 
 // -------------------------------------------------------------------------- //
 // LES models
