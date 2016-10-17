@@ -405,7 +405,7 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correct()
       - fvm::SuSp((2.0/3.0)*alpha*rho*divU, kU_)
       - fvm::Sp(alpha*rho*this->betaStar_*omegaU_, kU_)
       + kSource()
-      //+ fvOptions(alpha, rho, kU_)
+      + fvOptions(alpha, rho, kU_)
     );
 
     kUEqn.ref().relax();
@@ -415,7 +415,6 @@ void kOmegaSSTPANS<BasicTurbulenceModel>::correct()
     bound(kU_, min(fK_)*this->kMin_);
 
 
-    
     // Calculation of Turbulent kinetic energy and Frequency
     this->k_ = kU_/fK_;
     this->k_.correctBoundaryConditions();
