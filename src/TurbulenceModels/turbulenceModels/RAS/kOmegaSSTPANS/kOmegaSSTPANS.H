@@ -40,7 +40,7 @@ Description
 
     The model coefficients are
     \verbatim
-        kOmegaSSTPANSCoeffs
+        kOmegaSSTCoeffs
         {
             // Default SST coefficients
             alphaK1     0.85;
@@ -58,17 +58,11 @@ Description
             F3          no;
 
             // Default PANS coefficients
-            Cs          0.11;
-            kappa       0.41;
-            zeta2       3.51;
-            sigmaPhi    2.0/3.0;
-            C           2;
-
             fEpsilon    1.0;
             fKupperLimit  1.0;
             fKlowerLimit  0.1;
 
-            // Delta must be specified for SAS e.g.
+            // Delta must be specified for PANS e.g.
             delta cubeRootVol;
 
             cubeRootVolCoeffs
