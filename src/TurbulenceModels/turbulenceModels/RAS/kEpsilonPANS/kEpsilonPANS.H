@@ -33,7 +33,7 @@ Description
     (RDT) based compression term. The fK parameter, responsible for switching 
     from RAS to DNS is calculated based on [Girimaji,2005]:
 
-    fK_ = min( max( sqrt(Cmu_.value())*(pow(pow(cellVolume,1.0/3.0)/
+    fK_ = min( max( sqrt(Cmu_.value())*(pow(delta()/
            (pow(kU_,1.5)/epsilonU_),2.0/3.0)) , loLimVec ), uLimVec );
 
     bounded between loLim (DNS -> 0.0) and uLim (RAS -> 1.0). The lower the 
@@ -89,6 +89,12 @@ Description
             fEpsilon    1.0;
             fKupperLimit  1.0;
             fKlowerLimit  0.1;
+
+            // Delta must be specified for PANS e.g.
+            delta cubeRootVol;
+
+            cubeRootVolCoeffs
+            {}
         }
     \endverbatim
 
@@ -102,6 +108,7 @@ SourceFiles
 
 #include "RASModel.H"
 #include "eddyViscosity.H"
+#include "LESdelta.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -146,6 +153,8 @@ protected:
 
             volScalarField fK_;
             volScalarField C2U;
+            //- Run-time selectable delta model
+            autoPtr<Foam::LESdelta> delta_;
 
             volScalarField k_;
             volScalarField kU_;
@@ -196,6 +205,12 @@ public:
 
         //- Re-read model coefficients if they have changed
         virtual bool read();
+
+        //- Access function to filter width
+        inline const volScalarField& delta() const
+        {
+            return delta_();
+        }
 
         //- Return the effective diffusivity for unresolved k
         tmp<volScalarField> DkUEff() const

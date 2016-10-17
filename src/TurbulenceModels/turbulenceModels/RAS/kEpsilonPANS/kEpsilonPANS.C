@@ -112,6 +112,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
             0.09
         )
     ),
+
     C1_
     (
         dimensioned<scalar>::lookupOrAddToDict
@@ -121,6 +122,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
             1.44
         )
     ),
+
     C2_
     (
         dimensioned<scalar>::lookupOrAddToDict
@@ -130,6 +132,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
             1.92
         )
     ),
+
     C3_
     (
         dimensioned<scalar>::lookupOrAddToDict
@@ -139,6 +142,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
             -0.33
         )
     ),
+
     sigmak_
     (
         dimensioned<scalar>::lookupOrAddToDict
@@ -148,6 +152,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
             1.0
         )
     ),
+
     sigmaEps_
     (
         dimensioned<scalar>::lookupOrAddToDict
@@ -157,6 +162,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
             1.3
         )
     ),
+
     fEpsilon_
     (
         dimensioned<scalar>::lookupOrAddToDict
@@ -166,6 +172,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
             1.0
         )
     ),
+
     uLim_
     (
         dimensioned<scalar>::lookupOrAddToDict
@@ -175,6 +182,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
             1.0
         )
     ),
+
     loLim_
     (
         dimensioned<scalar>::lookupOrAddToDict
@@ -184,6 +192,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
             0.1
         )
     ),
+
     fK_
     (
         IOobject
@@ -197,6 +206,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
         this->mesh_,
         dimensionedScalar("zero",loLim_)
     ),
+
     C2U
     (
         IOobject
@@ -207,6 +217,17 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
         ),
         C1_ + (fK_/fEpsilon_)*(C2_ - C1_)
     ),
+
+    delta_
+    (
+        LESdelta::New
+        (
+            IOobject::groupName("delta", U.group()),
+            *this,
+            this->coeffDict_
+        )
+    ),
+
     k_
     (
         IOobject
@@ -219,6 +240,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
         ),
         this->mesh_
     ),
+
     kU_
     (
         IOobject
@@ -232,6 +254,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
         k_*fK_,
         k_.boundaryField().types()
     ),
+
     epsilon_
     (
         IOobject
@@ -244,6 +267,7 @@ kEpsilonPANS<BasicTurbulenceModel>::kEpsilonPANS
         ),
         this->mesh_
     ),
+
     epsilonU_
     (
         IOobject
@@ -389,13 +413,7 @@ void kEpsilonPANS<BasicTurbulenceModel>::correct()
 
     // Recalculate fK and C2U with new kU and epsilonU
 
-    // Geometric parameter
-    volScalarField::Internal delta
-    (
-    	pow(this->mesh_.V(),1.0/3.0)
-    );
-
-    // Calculate the Taylor microscale
+    // Calculate the turbulence integral length scale
     volScalarField::Internal Lambda
     (
     	pow(k_,1.5)/epsilon_
@@ -403,7 +421,7 @@ void kEpsilonPANS<BasicTurbulenceModel>::correct()
     
     // update fK
     fK_.primitiveFieldRef() = min(max(
-    	sqrt(Cmu_.value())*pow(delta/Lambda,2.0/3.0), loLim_), uLim_);
+    	sqrt(Cmu_.value())*pow(delta()/Lambda,2.0/3.0), loLim_), uLim_);
     
     // update C2U
     C2U = C1_ + (fK_/fEpsilon_)*(C2_ - C1_);
