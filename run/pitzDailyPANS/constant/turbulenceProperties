@@ -1,0 +1,48 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  3.0.x                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      turbulenceProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+simulationType RAS;
+
+RAS
+{
+    RASModel        kEpsilonPANS;
+    //RASModel        kOmegaSSTPANS;
+
+    kEpsilonPANSCoeffs
+    {
+        // fK bounds. fK -> 1.0 RAS, fK -> 0 DNS
+        fKupperLimit  0.5; // default: 1.0
+        fKlowerLimit  0.1; // default: 0.1
+    }
+
+    kOmegaSSTCoeffs
+    {
+        fKupperLimit  0.5;
+        fKlowerLimit  0.1;
+
+        delta cubeRootVol;
+
+        cubeRootVolCoeffs{}
+    }
+
+    turbulence      on;
+
+    printCoeffs     on;
+
+}
+
+// ************************************************************************* //
