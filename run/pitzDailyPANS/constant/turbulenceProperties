@@ -27,6 +27,10 @@ RAS
         // fK bounds. fK -> 1.0 RAS, fK -> 0 DNS
         fKupperLimit  0.5; // default: 1.0
         fKlowerLimit  0.1; // default: 0.1
+
+        delta cubeRootVol; // delta for fK using LESdelta
+
+        cubeRootVolCoeffs{}
     }
 
     kOmegaSSTCoeffs
